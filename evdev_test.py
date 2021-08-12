@@ -28,10 +28,3 @@ for event in gp.read_loop():
     elif event.type == ecodes.EV_ABS:
         absevent = categorize(event)
         print(ecodes.bytype[absevent.event.type][absevent.event.code], absevent.event.value)
-
-
-
-# try:
-    
-# except KeyboardInterrupt:
-#     sys.exit()
