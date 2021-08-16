@@ -28,6 +28,9 @@ with serial.Serial("/dev/ttyACM0", 9600, timeout=1) as arduino:
         try:
             # check for activity on the gamepad
             for event in gp.read_loop():
+                # if nothing is being pressed, stop
+                if not gp.active_keys():
+                    msg = 'S'
                 # buttons
                 if event.type == ecodes.EV_KEY:
                     print(event)
