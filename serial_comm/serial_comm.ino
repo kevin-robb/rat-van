@@ -26,6 +26,8 @@ const int led_blue = 13;
 
 // serial msg from Pi will be L, R, F, B, or S
 String msg;
+// allow led color to change as visual indicator
+int col = led_red;
 
 void setup() {
   // setup all GPIO pins
@@ -59,6 +61,7 @@ void loop() {
   } else if (msg == "S") { // stop
     digitalWrite(enable_R, LOW);
     digitalWrite(enable_L, LOW);
+    col = led_red;
   } else if (msg == "F") { // forward
     digitalWrite(enable_R, HIGH);
     digitalWrite(enable_L, HIGH);
@@ -68,6 +71,7 @@ void loop() {
     // right forwards
     digitalWrite(in_R1, HIGH);
     digitalWrite(in_R2, LOW);
+    col = led_green;
   } else if (msg == "B") { // backward
     digitalWrite(enable_R, HIGH);
     digitalWrite(enable_L, HIGH);
@@ -77,6 +81,7 @@ void loop() {
     // right backwards
     digitalWrite(in_R1, LOW);
     digitalWrite(in_R2, HIGH);
+    col = led_green;
   } else if (msg == "L") { // turn left
     digitalWrite(enable_R, HIGH);
     digitalWrite(enable_L, HIGH);
@@ -86,6 +91,7 @@ void loop() {
     // right forwards
     digitalWrite(in_R1, HIGH);
     digitalWrite(in_R2, LOW);
+    col = led_blue;
   } else if (msg == "R") { // turn right
     digitalWrite(enable_R, HIGH);
     digitalWrite(enable_L, HIGH);
@@ -95,17 +101,20 @@ void loop() {
     // right backwards
     digitalWrite(in_R1, LOW);
     digitalWrite(in_R2, HIGH);
+    col = led_blue;
   } else {
     Serial.print("Not a known message.");
   }
   // reply with IMU or sonar data only when we get a message
   if (msg != "") {
-    sendData();
+    //sendData();
+    Serial.print("Received ");
+    Serial.print(msg);
   }
   
   // update at 10Hz
   //delay(100);
-  flash(led_blue);
+  flash(col);
 }
 
 void readSerialPort() {

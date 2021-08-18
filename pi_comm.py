@@ -19,6 +19,25 @@ print(gp)
 msg = ""
 msg_codes = {308:'F',304:'B',307:'L',305:'R',311:'Q'}
 
+# function to send a message to the arduino and wait for a response
+def send_to_uno(msg: str):
+    # send the message over serial to the arduino
+    arduino.write(msg.encode())
+    # wait for arduino to answer
+    while arduino.inWaiting()==0: pass
+    if  arduino.inWaiting()>0: 
+        response=str(arduino.readline())
+        # print received data to console
+        print(response)
+        # TODO format received data
+        # dataList=response.split("x")
+        # print("led state : {}".format(dataList[0]))
+        # print("Analog input A0 : {}".format(dataList[1]))
+        # print("Analog input A1: {}".format(dataList[2]))
+        
+        # remove data after reading
+        arduino.flushInput()
+
 # start serial comm with arduino
 print('Running. Press CTRL-C or Left Bumper to exit.')
 with serial.Serial("/dev/ttyACM0", 9600, timeout=1) as arduino:
@@ -28,42 +47,24 @@ with serial.Serial("/dev/ttyACM0", 9600, timeout=1) as arduino:
         try:
             # check for activity on the gamepad
             for event in gp.read_loop():
-                # if nothing is being pressed, stop
-                if not gp.active_keys():
-                    msg = 'S'
                 # buttons
                 if event.type == ecodes.EV_KEY:
                     print(event)
-                    if event.value == 0:
+                    if event.value == 0: # unpress
                         msg = 'S'
-                    elif event.code in msg_codes.keys():
+                    elif event.code in msg_codes.keys(): # press one of our defined keys
                         if msg_codes[event.code] == 'Q':
-                            #sys.exit()
                             raise KeyboardInterrupt
                         else:
                             msg = msg_codes[event.code]
-                        # send the message over serial to the arduino
-                        arduino.write(msg.encode())
-                        # wait for arduino to answer
-                        while arduino.inWaiting()==0: pass
-                        if  arduino.inWaiting()>0: 
-                            response=str(arduino.readline())
-                            # print received data to console
-                            print(response + "\n")
-                            # TODO format received data
-                            # dataList=response.split("x")
-                            # print("led state : {}".format(dataList[0]))
-                            # print("Analog input A0 : {}".format(dataList[1]))
-                            # print("Analog input A1: {}".format(dataList[2]))
-                            
-                            # remove data after reading
-                            arduino.flushInput()
-                # analog
-                elif event.type == ecodes.EV_ABS:
-                    # do nothing but print info
-                    absevent = categorize(event)
-                    print(ecodes.bytype[absevent.event.type][absevent.event.code], absevent.event.value)
+                    send_to_uno(msg)
+                # # analog
+                # elif event.type == ecodes.EV_ABS:
+                #     # do nothing but print info
+                #     absevent = categorize(event)
+                #     print(ecodes.bytype[absevent.event.type][absevent.event.code], absevent.event.value)
    
         except KeyboardInterrupt: # Ctrl-C pressed
             print("KeyboardInterrupt has been caught.")
-
+            # tell the arduino to STOP
+            send_to_uno('S')
