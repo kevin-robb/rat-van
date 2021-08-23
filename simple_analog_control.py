@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import serial,time, sys
 from evdev import InputDevice, list_devices, ecodes, categorize
+from math import acos, sqrt, pi
 
 # only prints to console instead of sending to arduino and waiting for a response.
 DEBUG_MODE = False
-MAX_POS = 1.0 # formerly 255
+MAX_POS = 255
 
 button_codes = {'Y':308,'A':304,'X':307,'B':305,'RB':311}
 gp = None
@@ -40,10 +41,25 @@ def calibrate():
 
 # create serial message for arduino
 def create_msg():
-    # format as (-Y, X) to get a regular cartesian coordinate system,
-    # with x and y as floats in range [-1,1] with 3 decimal places
-    form = "{y:.3f},{x:.3f}"
-    return form.format(y = -(joy_pos[1]/squish_factor[1]), x = joy_pos[0]/squish_factor[0])
+    x = joy_pos[0]/squish_factor[0]
+    y = -(joy_pos[1]/squish_factor[1])
+    yaw = acos(abs(x)/sqrt(x**2 + y**2))
+    turn_coeff = -1 + yaw/(pi/4)
+    turn = turn_coeff * abs(abs(y) - abs(x))
+    move = max(abs(y), abs(x))
+    # set motor speeds depending on quadrant of joystick
+    if (x >= 0 and y >= 0) or (x < 0 and y < 0):
+        left = move
+        right = turn
+    else:
+        left = turn
+        right = move
+    # check if we're going backwards
+    if y < 0:
+        left = -left
+        right = -right
+    # create the message to send
+    return str(-int(left*MAX_POS)) + "," + str(int(right * MAX_POS))
 
 # function to send a message to the arduino
 def send_msg(arduino, kill=False):

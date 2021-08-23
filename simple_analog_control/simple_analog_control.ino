@@ -13,10 +13,8 @@ const int led_blue = 13;
 // serial msg from Pi
 String msg;
 int comma_pos;
-int y_speed; // +1 = full forward, -1 = full backward
-int x_speed; // +1 = full right, -1 = full left
-int motor_L_speed;
-int motor_R_speed;
+int left;
+int right;
 
 // allow led color to change as visual indicator
 int col = led_blue;
@@ -40,40 +38,31 @@ void loop() {
   // get message from the Pi
   readSerialPort();
   if (msg != "") {
-    // set motors based on msg received. format = "int,int"
+    // set motors based on msg received. format = "float,float"
     comma_pos = msg.indexOf(',');
-    y_speed = msg.substring(0,comma_pos).toFloat();
-    x_speed = msg.substring(comma_pos+1).toFloat();
-    motor_L_speed = abs(y_speed);
-    motor_R_speed = abs(y_speed);
-    // modify speeds based on turn intensity, and clamp to [0,255]
-    if (x_speed < 0) {
-      // left turn
-      motor_L_speed += x_speed;
-      motor_L_speed = max(motor_L_speed, 0);
-    } else {
-      // right turn
-      motor_R_speed -= x_speed;
-      motor_R_speed = max(motor_R_speed, 0);
-    }
+    left = msg.substring(0,comma_pos).toInt();
+    right = msg.substring(comma_pos+1).toInt();
     // set motor speeds
-    analogWrite(enable_R, motor_R_speed);
-    analogWrite(enable_L, motor_L_speed);
-    // set motor directions
-    if (y_speed > 0) {
-      // left forwards
-      digitalWrite(in_L1, HIGH);
-      digitalWrite(in_L2, LOW);
-      // right forwards
-      digitalWrite(in_R1, HIGH);
-      digitalWrite(in_R2, LOW);
-    } else {
+    analogWrite(enable_L, abs(left));
+    analogWrite(enable_R, abs(right));
+    // set directions according to signs
+    if (left < 0) {
       // left backwards
       digitalWrite(in_L1, LOW);
       digitalWrite(in_L2, HIGH);
+    } else {
+      // left forwards
+      digitalWrite(in_L1, HIGH);
+      digitalWrite(in_L2, LOW);
+    }
+    if (right < 0) {
       // right backwards
       digitalWrite(in_R1, LOW);
       digitalWrite(in_R2, HIGH);
+    } else {
+      // right forwards
+      digitalWrite(in_R1, HIGH);
+      digitalWrite(in_R2, LOW);
     }
   }
   
