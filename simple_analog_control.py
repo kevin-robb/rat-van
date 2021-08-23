@@ -4,6 +4,7 @@ from evdev import InputDevice, list_devices, ecodes, categorize
 
 # only prints to console instead of sending to arduino and waiting for a response.
 DEBUG_MODE = False
+MAX_POS = 1.0 # formerly 255
 
 button_codes = {'Y':308,'A':304,'X':307,'B':305,'RB':311}
 gp = None
@@ -34,16 +35,17 @@ def calibrate():
     cal_params["x_min"] = min(joy_pos[0],cal_params["x_min"])
     cal_params["y_max"] = max(joy_pos[1],cal_params["y_max"])
     cal_params["y_min"] = min(joy_pos[1],cal_params["y_min"])
-    squish_factor = [cal_params["x_max"] / 255, cal_params["y_max"] / 255]
+    squish_factor = [cal_params["x_max"] / MAX_POS, cal_params["y_max"] / MAX_POS]
     print(joy_pos,cal_params,squish_factor)
 
 # create serial message for arduino
-# format = "x,y" where x and y are ints in range [-255,255]
 def create_msg():
-    # format so joystick up = +255, and is the first coordinate
-    return str(-int(joy_pos[1]/squish_factor[1])) + "," + str(int(joy_pos[0]/squish_factor[0]))
+    # format as (-Y, X) to get a regular cartesian coordinate system,
+    # with x and y as floats in range [-1,1] with 3 decimal places
+    form = "{y:.3f},{x:.3f}"
+    return form.format(y = -(joy_pos[1]/squish_factor[1]), x = joy_pos[0]/squish_factor[0])
 
-# function to send a message to the arduino and wait for a response
+# function to send a message to the arduino
 def send_msg(arduino, kill=False):
     msg = create_msg() if not kill else "0,0"
     if DEBUG_MODE:
@@ -54,8 +56,12 @@ def send_msg(arduino, kill=False):
         arduino.write(msg.encode())
 
 def main():
-    global calibrating, joy_pos
+    global calibrating, joy_pos, cal_params
     setup_gamepad()
+    # just set the known values of my joystick to skip calibrating each time
+    cal_params = {"x_max":32767,"x_min":-32768,"y_max":32767,"y_min":-32768}
+    # call calibrate to set the squish factor
+    calibrate()
     # start serial comm with arduino
     print('Running. Hold X to calibrate, and press B to exit.')
     if DEBUG_MODE:

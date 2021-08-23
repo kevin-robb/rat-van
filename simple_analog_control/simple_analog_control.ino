@@ -13,8 +13,8 @@ const int led_blue = 13;
 // serial msg from Pi
 String msg;
 int comma_pos;
-int y_speed; // +255 = full forward, -255 = full backward
-int x_speed; // +255 = full right, -255 = full left
+int y_speed; // +1 = full forward, -1 = full backward
+int x_speed; // +1 = full right, -1 = full left
 int motor_L_speed;
 int motor_R_speed;
 
@@ -42,8 +42,8 @@ void loop() {
   if (msg != "") {
     // set motors based on msg received. format = "int,int"
     comma_pos = msg.indexOf(',');
-    y_speed = msg.substring(0,comma_pos).toInt();
-    x_speed = msg.substring(comma_pos+1).toInt();
+    y_speed = msg.substring(0,comma_pos).toFloat();
+    x_speed = msg.substring(comma_pos+1).toFloat();
     motor_L_speed = abs(y_speed);
     motor_R_speed = abs(y_speed);
     // modify speeds based on turn intensity, and clamp to [0,255]
