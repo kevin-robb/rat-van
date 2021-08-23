@@ -13,11 +13,13 @@ const int led_blue = 13;
 // serial msg from Pi
 String msg;
 int comma_pos;
-int forward_speed; // +255 = full forward, -255 = full backward
-int side_speed; // +255 = full right, -255 = full left
+int y_speed; // +255 = full forward, -255 = full backward
+int x_speed; // +255 = full right, -255 = full left
+int motor_L_speed;
+int motor_R_speed;
 
 // allow led color to change as visual indicator
-int col = led_red;
+int col = led_blue;
 
 void setup() {
   // setup all GPIO pins
@@ -37,12 +39,45 @@ void setup() {
 void loop() {
   // get message from the Pi
   readSerialPort();
-  // set motors based on msg received. format = "int,int"
-  comma_pos = msg.indexOf(',');
-  forward_speed = msg.substring(0,comma_pos).toInt();
-  side_speed = msg.substring(comma_pos+1).toInt();
+  if (msg != "") {
+    // set motors based on msg received. format = "int,int"
+    comma_pos = msg.indexOf(',');
+    y_speed = msg.substring(0,comma_pos).toInt();
+    x_speed = msg.substring(comma_pos+1).toInt();
+    motor_L_speed = abs(y_speed);
+    motor_R_speed = abs(y_speed);
+    // modify speeds based on turn intensity, and clamp to [0,255]
+    if (x_speed < 0) {
+      // left turn
+      motor_L_speed += x_speed;
+      motor_L_speed = max(motor_L_speed, 0);
+    } else {
+      // right turn
+      motor_R_speed -= x_speed;
+      motor_R_speed = max(motor_R_speed, 0);
+    }
+    // set motor speeds
+    analogWrite(enable_R, motor_R_speed);
+    analogWrite(enable_L, motor_L_speed);
+    // set motor directions
+    if (y_speed > 0) {
+      // left forwards
+      digitalWrite(in_L1, HIGH);
+      digitalWrite(in_L2, LOW);
+      // right forwards
+      digitalWrite(in_R1, HIGH);
+      digitalWrite(in_R2, LOW);
+    } else {
+      // left backwards
+      digitalWrite(in_L1, LOW);
+      digitalWrite(in_L2, HIGH);
+      // right backwards
+      digitalWrite(in_R1, LOW);
+      digitalWrite(in_R2, HIGH);
+    }
+  }
   
-  // flash led and delay
+  // flash led for delay
   flash(col);
 }
 

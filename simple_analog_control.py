@@ -3,7 +3,7 @@ import serial,time, sys
 from evdev import InputDevice, list_devices, ecodes, categorize
 
 # only prints to console instead of sending to arduino and waiting for a response.
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 button_codes = {'Y':308,'A':304,'X':307,'B':305,'RB':311}
 gp = None
@@ -52,14 +52,6 @@ def send_msg(arduino, kill=False):
     else:
         # send the message over serial to the arduino
         arduino.write(msg.encode())
-        # wait for arduino to answer
-        while arduino.inWaiting()==0: pass
-        if  arduino.inWaiting()>0: 
-            response=str(arduino.readline())
-            # print received data to console
-            print(response)
-            # remove data after reading
-            arduino.flushInput()
 
 def main():
     global calibrating, joy_pos
