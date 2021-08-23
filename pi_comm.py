@@ -58,11 +58,11 @@ with serial.Serial("/dev/ttyACM0", 9600, timeout=1) as arduino:
                         else:
                             msg = msg_codes[event.code]
                     send_to_uno(msg)
-                # # analog
-                # elif event.type == ecodes.EV_ABS:
-                #     # do nothing but print info
-                #     absevent = categorize(event)
-                #     print(ecodes.bytype[absevent.event.type][absevent.event.code], absevent.event.value)
+                # analog
+                elif event.type == ecodes.EV_ABS:
+                    # do nothing but print info
+                    absevent = categorize(event)
+                    print(ecodes.bytype[absevent.event.type][absevent.event.code], absevent.event.value)
    
         except KeyboardInterrupt: # Ctrl-C pressed
             print("KeyboardInterrupt has been caught.")
