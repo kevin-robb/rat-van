@@ -41,8 +41,13 @@ def calibrate():
 
 # create serial message for arduino
 def create_msg():
+    # get cartesian coordinates
     x = joy_pos[0]/squish_factor[0]
     y = -(joy_pos[1]/squish_factor[1])
+    # zero region
+    if abs(x) < 0.25 * MAX_POS and abs(y) < 0.25 * MAX_POS:
+        return str("0,0")
+    # calculate stuff
     yaw = acos(abs(x)/sqrt(x**2 + y**2))
     turn_coeff = -1 + yaw/(pi/4)
     turn = turn_coeff * abs(abs(y) - abs(x))
@@ -59,7 +64,7 @@ def create_msg():
         left = -left
         right = -right
     # create the message to send
-    return str(-int(left*MAX_POS)) + "," + str(int(right * MAX_POS))
+    return str(int(left*MAX_POS)) + "," + str(int(right * MAX_POS))
 
 # function to send a message to the arduino
 def send_msg(arduino, kill=False):
